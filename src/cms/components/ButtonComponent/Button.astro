@@ -7,14 +7,19 @@ import type { ContentPayload } from '../../../graphql/shared/ContentPayload';
 import LinkButton from './LinkButton.astro';
 import { getButtonStyles } from './ButtonStyling';
 import { getLoginButtonStyles } from './LoginButtonStyling';
+import { isEditContext, getLink } from '../../shared/utils.ts';
+import type { ButtonLinkData } from '../../shared/utils.ts';
+
+const isCmsEdit = isEditContext(Astro.url);
 
 export interface Props {
+    key: string;
     data: ButtonFragment;
     displaySettings: DisplaySettingsFragment[];
     displayTemplateKey: string;
     contentPayload: ContentPayload;
 }
-const { data, displaySettings, displayTemplateKey, contentPayload } = Astro.props as Props;
+const { key, data, displaySettings, displayTemplateKey, contentPayload } = Astro.props as Props;
 
 const isDefaultButton = displayTemplateKey === 'DefaultButton';
 const isLoginButton = displayTemplateKey === 'LoginButton';
@@ -30,10 +35,26 @@ if(isLoginButton) {
     btnStyles = getButtonStyles(displaySettings);
 }
 
+const currentDomain = Astro.url.origin;
+const safeButtonLink: ButtonLinkData = {
+    url: {
+        hierarchical: data?.ButtonLink?.url?.hierarchical ?? '#',
+        default: data?.ButtonLink?.url?.default ?? '#',
+        type: data?.ButtonLink?.url?.type ?? 'HIERARCHICAL',
+        base: data?.ButtonLink?.url?.base ?? currentDomain,
+    }
+};
+const buttonLink = getLink(safeButtonLink, currentDomain);
+
+const componentClass = 'component-button';
 ---
 { isDefaultButton &&
-    <LinkButton cssClasses={btnStyles} link={data?.ButtonLink?.url?.hierarchical}>{data?.ButtonLabel}</LinkButton>
+    <span data-epi-block-id={isCmsEdit && key || undefined} class={componentClass}>
+        <LinkButton cssClasses={btnStyles} link={buttonLink}>{data?.ButtonLabel}</LinkButton>
+    </span>
 }
 { isLoginButton &&
-    <LinkButton cssClasses={btnStyles} link={data?.ButtonLink?.url?.hierarchical}><Fragment set:html={loginButtonSlot}/></LinkButton>
+    <span data-epi-block-id={isCmsEdit && key || undefined} class={componentClass}>
+        <LinkButton cssClasses={btnStyles} link={buttonLink}><Fragment set:html={loginButtonSlot}/></LinkButton>
+    </span>
 }

@@ -4,6 +4,25 @@
   "contentType": "Hero",
   "isDefault": true,
   "settings": {
+    "hoverEffect": {
+      "displayName": "Hover Effect",
+      "editor": "",
+      "sortOrder": 1,
+      "choices": {
+        "zoom_subtle": {
+          "displayName": "Zoom (Subtle) (Default)",
+          "sortOrder": 10
+        },
+        "zoom": {
+          "displayName": "Zoom",
+          "sortOrder": 20
+        },
+        "none": {
+          "displayName": "None",
+          "sortOrder": 30
+        }
+      }
+    },
     "hero_height": {
       "displayName": "Hero Height",
       "editor": "",
@@ -51,13 +70,49 @@
       "editor": "",
       "sortOrder": 40,
       "choices": {
+        "default": {
+          "displayName": "Default (Theme)",
+          "sortOrder": 10
+        },
         "white": {
           "displayName": "White",
-          "sortOrder": 40
+          "sortOrder": 20
         },
         "black": {
           "displayName": "Black",
+          "sortOrder": 30
+        },
+        "neutral": {
+          "displayName": "Neutral",
+          "sortOrder": 40
+        },
+        "primary": {
+          "displayName": "Primary",
           "sortOrder": 50
+        },
+        "secondary": {
+          "displayName": "Secondary",
+          "sortOrder": 60
+        },
+        "accent": {
+          "displayName": "Accent",
+          "sortOrder": 70
+        },
+        "info": {
+          "displayName": "Info",
+          "sortOrder": 80
+        },
+        "success": {
+          "displayName": "Success",
+          "sortOrder": 90
+        },
+        "warning": {
+          "displayName": "Warning",
+          "sortOrder": 100
+        },
+        "error": {
+          "displayName": "Error",
+          "sortOrder": 110
         }
       }
     },
