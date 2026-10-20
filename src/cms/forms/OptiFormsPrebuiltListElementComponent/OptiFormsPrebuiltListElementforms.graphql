@@ -1,7 +1,0 @@
-fragment prebuiltListElement on OptiFormsPrebuiltListElement {
-    PrebuiltListType
-    Label
-    Placeholder
-    Tooltip
-    PredefinedValue
-}
