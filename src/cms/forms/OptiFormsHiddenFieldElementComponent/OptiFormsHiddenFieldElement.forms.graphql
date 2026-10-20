@@ -1,7 +1,0 @@
-fragment hiddenFieldElement on OptiFormsHiddenFieldElement {
-    HiddenFieldType
-    Label
-    Placeholder
-    Tooltip
-    PredefinedValue
-}
