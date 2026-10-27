@@ -13,6 +13,7 @@ import ExtPreviewLinkBanner from '../cms/shared/ExtPreviewLink/ExtPreviewLinkBan
 import DataPlatform from '../cms/shared/DataPlatform/DataPlatform.astro';
 // import { getOdpScript } from '../cms/shared/DataPlatform/dataPlatform.ts';
 import { isDraftContent, isEditContext } from '../cms/shared/utils.ts';
+import { defaultI18nConfig } from '../config/i18n.config';
 import { getOptimizelySdk } from '../graphql/getSdk';
 import type { ContentPayload } from '../graphql/shared/ContentPayload';
 import '../styles/global.css';
@@ -46,13 +47,26 @@ const isCmsEdit = isEditContext(Astro.url);
 const contentVersion = contentPayload.ver || '';
 const isDraft = EXTERNAL_PREVIEW_ENABLED && extPreviewEnabled && await isDraftContent(contentVersion);
 
-const { host } = Astro.url;
-const siteSettings = await getOptimizelySdk(
-    contentPayload
-).siteSettingsByHostname({
-    domain: host,
-    locale: [contentPayload.loc as Locales],
-});
+const { host, pathname } = Astro.url;
+
+// Path-based tenants: the first path segment (after an optional locale prefix) is a candidate
+// customer key. It is allow-listed (lowercase letters, digits, hyphen) before use, and it is only
+// ever sent to Graph as a query variable, never concatenated into a query.
+const segments = pathname.split('/').filter(Boolean);
+if (segments.length && defaultI18nConfig.locales.includes(segments[0].toLowerCase())) segments.shift();
+const tenantSlug = /^[a-z0-9-]{2,40}$/.test(segments[0] ?? '') ? segments[0] : null;
+const tenantDomain = tenantSlug ? `${host}/${tenantSlug}` : null;
+
+const sdk = getOptimizelySdk(contentPayload);
+const sdkLocale = [contentPayload.loc as Locales];
+
+// Try "host/<customer>" first, then fall back to the plain host
+let siteSettings = tenantDomain
+    ? await sdk.siteSettingsByHostname({ domain: tenantDomain, locale: sdkLocale })
+    : null;
+if (!siteSettings?.SiteSettings?.item) {
+    siteSettings = await sdk.siteSettingsByHostname({ domain: host, locale: sdkLocale });
+}
 
 const optiWebProjectId = siteSettings?.SiteSettings?.item?.OptiWebProjectId || null;
 const pageVariationWeb = Astro.url.searchParams.get('var') || null;
@@ -61,10 +75,12 @@ const odpEnabled = !!OPTIMIZELY_DATA_PLATFORM_PRIVATE_KEY;
 const odpPublicKey = odpEnabled && OPTIMIZELY_DATA_PLATFORM_PRIVATE_KEY?.split('.')[0];
 // const odpScript = odpPublicKey && getOdpScript(odpPublicKey);
 
-const siteStyles = await getOptimizelySdk(contentPayload).siteStylesByHostname({
-    domain: host,
-    locale: [contentPayload.loc as Locales],
-});
+let siteStyles = tenantDomain
+    ? await sdk.siteStylesByHostname({ domain: tenantDomain, locale: sdkLocale })
+    : null;
+if (!siteStyles?.SiteStyles?.item) {
+    siteStyles = await sdk.siteStylesByHostname({ domain: host, locale: sdkLocale });
+}
 
 const siteFont = getSiteFont(siteStyles?.SiteStyles?.item);
 
@@ -126,7 +142,7 @@ const isRtl = rtlLangs.includes(currentLang.split('-')[0]);
             });
         </script>
         {
-            EXTERNAL_PREVIEW_ENABLED && extPreviewEnabled && isDraft 
+            EXTERNAL_PREVIEW_ENABLED && extPreviewEnabled && isDraft
                 && (ctx === 'edit' || ctx === 'ext_preview') && (
                 <ExtPreviewLinkBanner
                     contentPayload={contentPayload}
